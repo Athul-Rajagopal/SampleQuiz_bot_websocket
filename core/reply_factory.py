@@ -32,7 +32,21 @@ def record_current_answer(answer, current_question_id, session):
     '''
     Validates and stores the answer for the current question to django session.
     '''
-    return True, ""
+    # Get the current question from the question list
+    current_question = PYTHON_QUESTION_LIST[current_question_id]
+
+    # Get the correct answer for the current question
+    correct_answer = current_question['answer']
+
+    # Validate the user's answer against the correct answer
+    if answer == correct_answer:
+        # Store the user's answer in the session
+        session['user_answers'] = session.get('user_answers', {})
+        session['user_answers'][current_question_id] = answer
+        session.save()
+        return True, "Good job !"
+    else:
+        return False, "Incorrect answer. Please try again."
 
 
 def get_next_question(current_question_id):
@@ -49,4 +63,14 @@ def generate_final_response(session):
     by the user for questions in the PYTHON_QUESTION_LIST.
     '''
 
-    return "dummy result"
+    user_answers = session.get('user_answers', {})
+    total_questions = len(PYTHON_QUESTION_LIST)
+    correct_answers = sum(1 for q_id, q in enumerate(PYTHON_QUESTION_LIST) if user_answers.get(str(q_id)) == q['answer'])
+
+    # Calculate the user's score
+    score = (correct_answers / total_questions) * 100
+
+    # Generate final response message
+    final_response = f"Congratulations on completing the quiz!\nYou answered {correct_answers} out of {total_questions} questions correctly.\nYour score is {score}%."
+
+    return final_response
