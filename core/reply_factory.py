@@ -9,6 +9,13 @@ def generate_bot_responses(message, session):
         bot_responses.append(BOT_WELCOME_MESSAGE)
         session["current_question_id"] = 0  # Set current_question_id to 0 if it's None
         session.save()
+        # Fetch the current question text after setting the current_question_id
+        current_question = PYTHON_QUESTION_LIST[0]
+        question_text = current_question["question_text"]
+        options = current_question["options"]
+        options_text = "\n".join([f"({i+1}). {option}" for i, option in enumerate(options)])
+        current_question_text = f"{question_text}\n{options_text}"
+        bot_responses.append(current_question_text)
         return bot_responses
 
     current_question_id = int(current_question_id)
@@ -22,14 +29,14 @@ def generate_bot_responses(message, session):
 
     if next_question:
         bot_responses.append(next_question)
+        session["current_question_id"] = next_question_id
+        session.save()
     else:
         final_response = generate_final_response(session)
         bot_responses.append(final_response)
 
-    session["current_question_id"] = next_question_id
-    session.save()
-
     return bot_responses
+
 
 
 def record_current_answer(answer, current_question_id, session):
@@ -61,7 +68,11 @@ def get_next_question(current_question_id):
     next_question_id = current_question_id + 1
 
     if next_question_id < len(PYTHON_QUESTION_LIST):
-        next_question = PYTHON_QUESTION_LIST[next_question_id]['question_text']
+        next_question_data = PYTHON_QUESTION_LIST[next_question_id]
+        next_question_text = next_question_data['question_text']
+        options = next_question_data["options"]
+        options_text = "\n".join([f"({i+1}). {option}" for i, option in enumerate(options)])
+        next_question = f"{next_question_text}\n{options_text}"
         return next_question, next_question_id
     else:
         return None, None  # No more questions available
