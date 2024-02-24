@@ -3,6 +3,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
 from .reply_factory import generate_bot_responses
+from .constants import BOT_WELCOME_MESSAGE
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -16,6 +17,14 @@ class ChatConsumer(WebsocketConsumer):
         )
 
         self.accept()
+
+        # Initialize current_question_id in session if not already present
+        if 'current_question_id' not in self.scope['session']:
+            self.scope['session']['current_question_id'] = None
+            self.scope['session'].save()
+
+        # Send the first quiz question
+        self.send_next_question()
 
     def disconnect(self, close_code):
         # Leave room group
@@ -56,6 +65,33 @@ class ChatConsumer(WebsocketConsumer):
                 'text': bot_response
             }
             # Send message to room group
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_name,
+                bot_response_obj
+            )
+            
+    def send_next_question(self):
+        current_question_id = self.scope['session']['current_question_id']
+        bot_responses = generate_bot_responses(None, self.scope['session'])
+        for bot_response in bot_responses:
+            bot_response_obj = {
+                'type': 'chat_message',
+                'is_user': False,
+                'text': bot_response
+            }
+            async_to_sync(self.channel_layer.group_send)(
+                self.group_name,
+                bot_response_obj
+            )
+            
+    def handle_user_answer(self, answer):
+        bot_responses = generate_bot_responses(answer, self.scope['session'])
+        for bot_response in bot_responses:
+            bot_response_obj = {
+                'type': 'chat_message',
+                'is_user': False,
+                'text': bot_response
+            }
             async_to_sync(self.channel_layer.group_send)(
                 self.group_name,
                 bot_response_obj

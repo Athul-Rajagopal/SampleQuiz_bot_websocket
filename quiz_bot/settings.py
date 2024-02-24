@@ -50,6 +50,7 @@ if DEBUG:
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -58,7 +59,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'core',
-    'daphne',
 ]
 
 MIDDLEWARE = [
@@ -95,10 +95,7 @@ ASGI_APPLICATION = "quiz_bot.asgi.application"
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("redis", 6379)],
-        },
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
 
@@ -108,12 +105,12 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     'default': {
-        'ENGINE': env('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': env('DB_NAME', 'postgres'),
-        'USER': env('DB_USER', 'postgres'),
-        'PASSWORD': env('DB_PASSWORD', 'password'),
-        'HOST': env('DB_HOST', 'db'),
-        'PORT': env('DB_PORT', '5432'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'chatbotDB',
+        'USER': 'postgres',
+        'PASSWORD':'47619',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -156,12 +153,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+# STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-# STATICFILES_DIRS = (
-#     os.path.join(
-#         BASE_DIR, 'static/'),
-# )
+STATICFILES_DIRS = (
+    os.path.join(
+        BASE_DIR, 'static/'),
+)
 
 
 # Default primary key field type

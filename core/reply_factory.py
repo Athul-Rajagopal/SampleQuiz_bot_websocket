@@ -1,4 +1,3 @@
-
 from .constants import BOT_WELCOME_MESSAGE, PYTHON_QUESTION_LIST
 
 
@@ -6,8 +5,13 @@ def generate_bot_responses(message, session):
     bot_responses = []
 
     current_question_id = session.get("current_question_id")
-    if not current_question_id:
+    if current_question_id is None:
         bot_responses.append(BOT_WELCOME_MESSAGE)
+        session["current_question_id"] = 0  # Set current_question_id to 0 if it's None
+        session.save()
+        return bot_responses
+
+    current_question_id = int(current_question_id)
 
     success, error = record_current_answer(message, current_question_id, session)
 
@@ -30,7 +34,7 @@ def generate_bot_responses(message, session):
 
 def record_current_answer(answer, current_question_id, session):
     '''
-    Validates and stores the answer for the current question to django session.
+    Validates and stores the answer for the current question to the Django session.
     '''
     # Get the current question from the question list
     current_question = PYTHON_QUESTION_LIST[current_question_id]
@@ -44,7 +48,7 @@ def record_current_answer(answer, current_question_id, session):
         session['user_answers'] = session.get('user_answers', {})
         session['user_answers'][current_question_id] = answer
         session.save()
-        return True, "Good job !"
+        return True, "Good job!"
     else:
         return False, "Incorrect answer. Please try again."
 
@@ -54,7 +58,13 @@ def get_next_question(current_question_id):
     Fetches the next question from the PYTHON_QUESTION_LIST based on the current_question_id.
     '''
 
-    return "dummy question", -1
+    next_question_id = current_question_id + 1
+
+    if next_question_id < len(PYTHON_QUESTION_LIST):
+        next_question = PYTHON_QUESTION_LIST[next_question_id]['question_text']
+        return next_question, next_question_id
+    else:
+        return None, None  # No more questions available
 
 
 def generate_final_response(session):
